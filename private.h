@@ -25,6 +25,9 @@
 #include <media/stagefright/MediaSource.h>
 #include "droidmediacamera.h"
 #include "droidmediacodec.h"
+#if ANDROID_MAJOR >=5
+#include <media/stagefright/foundation/ALooper.h>
+#endif
 
 class DroidMediaBufferQueueListener :
 #if (ANDROID_MAJOR == 4 && ANDROID_MINOR < 4)
@@ -60,6 +63,9 @@ public:
 
   void attachToCamera(android::sp<android::Camera>& camera);
   ANativeWindow *window();
+#if ANDROID_MAJOR > 5
+  android::sp<android::IGraphicBufferConsumer> consumer();
+#endif
 
   int releaseMediaBuffer(DroidMediaBuffer *buffer, EGLDisplay dpy, EGLSyncKHR fence);
 
@@ -88,6 +94,9 @@ private:
 
 android::sp<android::Camera> droid_media_camera_get_camera(DroidMediaCamera *camera);
 android::sp<android::MediaSource> droid_media_codec_create_encoder_raw(DroidMediaCodecEncoderMetaData *meta,
+#if ANDROID_MAJOR >=5
+							      android::sp<android::ALooper> looper,
+#endif
 							      android::sp<android::MediaSource> src);
  
 #endif /* DROID_MEDIA_PRIVATE_H */

@@ -23,6 +23,7 @@
 #include <binder/MemoryHeapBase.h>
 #include <MediaPlayerService.h>
 #if ANDROID_MAJOR >= 6
+#include <ResourceManagerService.h>
 #include <binder/BinderService.h>
 #if ANDROID_MAJOR < 7
 #include <camera/ICameraService.h>
@@ -70,6 +71,8 @@ main(int, char**)
     CameraService::instantiate();
 
 #if ANDROID_MAJOR >= 6
+    ALOGW("DroidMedia: starting ResourceManagerService");
+    ResourceManagerService::instantiate();
     FakeCameraServiceProxy::instantiate();
     // Camera service needs to be told which users may use the camera
     sp<IBinder> binder;

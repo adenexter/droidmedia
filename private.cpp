@@ -129,6 +129,7 @@ void _DroidMediaBufferQueue::attachToCamera(android::sp<android::Camera>& camera
 }
 
 ANativeWindow *_DroidMediaBufferQueue::window() {
+
 #if ANDROID_MAJOR == 4 && ANDROID_MINOR < 4
     android::sp<android::ISurfaceTexture> texture = m_queue;
     return new android::SurfaceTextureClient(texture);
@@ -140,6 +141,12 @@ ANativeWindow *_DroidMediaBufferQueue::window() {
     return new android::Surface(texture, true);
 #endif
 }
+
+#if ANDROID_MAJOR > 5
+android::sp<android::IGraphicBufferConsumer> _DroidMediaBufferQueue::consumer() {
+    return m_queue;
+}
+#endif
 
 DroidMediaBuffer *_DroidMediaBufferQueue::acquireMediaBuffer(DroidMediaBufferCallbacks *cb)
 {

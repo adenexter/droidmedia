@@ -24,6 +24,9 @@
 #if (ANDROID_MAJOR == 4 && ANDROID_MINOR < 4)
 #include <gui/Surface.h>
 #endif
+#if ANDROID_MAJOR >=5
+#include <media/stagefright/foundation/ALooper.h>
+#endif
 
 namespace android {
   class CameraSourceListener {
@@ -36,8 +39,12 @@ namespace android {
 
 struct _DroidMediaRecorder {
   _DroidMediaRecorder() :
-    m_cb_data(0),
-    m_running(false) {
+#if ANDROID_MAJOR < 5
+    m_running(false),
+#endif
+  m_cb_data(0)
+
+  {
     memset(&m_cb, 0x0, sizeof(m_cb));
   }
 
@@ -105,8 +112,11 @@ struct _DroidMediaRecorder {
   void *m_cb_data;
   android::sp<android::CameraSource> m_src;
   android::sp<android::MediaSource> m_codec;
-  bool m_running;
+#if ANDROID_MAJOR >= 5
+  android::sp<android::ALooper> m_looper = NULL;
+#endif
   pthread_t m_thread;
+  bool m_running;
 };
 
 extern "C" {
@@ -135,7 +145,11 @@ DroidMediaRecorder *droid_media_recorder_create(DroidMediaCamera *camera, DroidM
   recorder->m_src->getFormat()->findInt32(android::kKeyColorFormat, &meta->color_format);
   
   // Now the encoder:
+#if ANDROID_MAJOR >= 5
+  recorder->m_codec = (droid_media_codec_create_encoder_raw(meta, recorder->m_looper, recorder->m_src));
+#else
   recorder->m_codec = (droid_media_codec_create_encoder_raw(meta, recorder->m_src));
+#endif
 
   return recorder;
 
@@ -149,9 +163,10 @@ void droid_media_recorder_destroy(DroidMediaRecorder *recorder) {
 }
 
 bool droid_media_recorder_start(DroidMediaRecorder *recorder) {
-  recorder->m_running = true;
 
-  int err = recorder->m_codec->start();
+	recorder->m_running = true;
+
+	int err = recorder->m_codec->start();
 
   if (err != android::OK) {
     ALOGE("DroidMediaRecorder: error 0x%x starting codec", -err);
@@ -163,14 +178,21 @@ bool droid_media_recorder_start(DroidMediaRecorder *recorder) {
   pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
   pthread_create(&recorder->m_thread, &attr, DroidMediaRecorder::ThreadWrapper, recorder);
   pthread_attr_destroy(&attr);
+#if ANDROID_MAJOR >= 5
+  recorder->m_looper->start();
+#endif
 
   return true;
 }
 
 void droid_media_recorder_stop(DroidMediaRecorder *recorder) {
+
   recorder->m_running = false;
   void *dummy;
   pthread_join(recorder->m_thread, &dummy);
+#if ANDROID_MAJOR >= 5
+  recorder->m_looper->stop();
+#endif
 
   int err = recorder->m_codec->stop();
   if (err != android::OK) {
