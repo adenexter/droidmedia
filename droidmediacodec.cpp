@@ -572,6 +572,11 @@ DroidMediaCodec *droid_media_codec_create(DroidMediaCodecBuilder& builder)
   mediaCodec->m_window = window;
   mediaCodec->m_useExternalLoop = true;
 
+  if (!mediaCodec->m_queue->connectListener()) {
+    ALOGE("Failed to connect buffer queue listener");
+    return NULL;
+  }
+
 #if ANDROID_MAJOR > 5
   android::sp<android::MediaSource> codec = builder.createCodec(src, window, consumer, mediaCodec->m_looper, md);
 #elif ANDROID_MAJOR == 5
