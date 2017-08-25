@@ -24,8 +24,6 @@
 #include <media/stagefright/MediaCodecList.h>
 #include <media/stagefright/MediaCodecSource.h>
 #include <media/stagefright/MediaCodec.h>
-#include <gui/Surface.h>
-#include <media/stagefright/Utils.h>
 #include <media/stagefright/SimpleDecodingSource.h>
 #include <media/stagefright/foundation/ALooper.h>
 #include <media/stagefright/foundation/AMessage.h>
@@ -382,45 +380,7 @@ public:
 #endif
     }
     else {
-    	android::sp<android::Surface> surface = static_cast<android::Surface*>(window.get());
-        const char *mime;
-        CHECK(meta->findCString(android::kKeyMIMEType, &md));
-
-        android::sp<android::AMessage> format = new android::AMessage;
-        if (convertMetaDataToMessage(md, &format) != android::OK) {
-            return NULL;
-        }
-
-        Vector<android::AString> matchingCodecs;
-        android::MediaCodecList::findMatchingCodecs(
-                    mime, false /* encoder */, flags, &matchingCodecs);
-        android::sp<android::MediaCodec> codec;
-
-        for (size_t i = 0; i < matchingCodecs.size(); ++i) {
-            const android::AString &componentName = matchingCodecs[i];
-
-            ALOGV("Attempting to allocate codec '%s'", componentName.c_str());
-
-            codec = android::MediaCodec::CreateByComponentName(looper, componentName);
-            if (codec != NULL) {
-                ALOGI("Successfully allocated codec '%s'", componentName.c_str());
-
-                status_t err = codec->configure(format, surface, NULL /* crypto */, 0 /* flags */);
-                if (err == OK) {
-                    err = codec->getOutputFormat(&format);
-                }
-                if (err == OK) {
-                    return new android::SimpleDecodingSource(codec, source, looper, surface != NULL, format);
-                }
-
-                ALOGD("Failed to configure codec '%s'", componentName.c_str());
-                codec->release();
-                codec = NULL;
-            }
-        }
-
-        ALOGE("No matching decoder! (mime: %s)", mime);
-        return NULL;
+    	return android::SimpleDecodingSource::Create(src, flags(), window, NULL);
     }
 #else
 	android::OMXClient omx;
@@ -619,7 +579,7 @@ DroidMediaCodec *droid_media_codec_create(DroidMediaCodecBuilder& builder)
 #else
   mediaCodec->m_useExternalLoop = (meta->flags & DROID_MEDIA_CODEC_USE_EXTERNAL_LOOP) ? true : false;
   android::sp<android::MediaSource> codec = builder.createCodec(src, window, md);
-  #endif
+#endif
 
   if (codec == NULL) {
     ALOGE("DroidMediaCodec: Failed to create codec");
