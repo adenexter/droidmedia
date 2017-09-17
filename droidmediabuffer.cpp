@@ -253,4 +253,28 @@ void droid_media_buffer_get_info(DroidMediaBuffer *buffer, DroidMediaBufferInfo 
     info->crop_rect = droid_media_buffer_get_crop_rect(buffer);
 }
 
+void *droid_media_buffer_lock(DroidMediaBuffer * buffer, uint32_t mode)
+{
+    uint32_T usage = 0;
+    if (mode & DROID_MEDIA_BUFFER_READ) {
+        usage |= GRALLOC_USAGE_SW_READ_OFTEN;
+    }
+    if (mode & DROID_MEDIA_BUFFER_WRITE) {
+        usage |= GRALLOC_USAGE_SW_WRITE_OFTEN;
+    }
+
+    void *data = 0;
+
+    if (buffer->m_buffer->lock(usage, &data) == OK) {
+        return data;
+    } else {
+        return 0;
+    }
+}
+
+void droid_media_buffer_unlock(DroidMediaBuffer * buffer)
+{
+    buffer->m_buffer->unlock();
+}
+
 };

@@ -37,6 +37,11 @@ typedef void *EGLSyncKHR;
 
 typedef void (*DroidMediaCallback)(void *data);
 
+typedef enum {
+  DROID_MEDIA_BUFFER_READ = 1,
+  DROID_MEDIA_BUFFER_WRITE = 2,
+} DroidMediaBufferLockMode;
+
 typedef struct {
   void *data;
   ssize_t size;
@@ -91,6 +96,8 @@ uint32_t droid_media_buffer_get_width(DroidMediaBuffer * buffer);
 uint32_t droid_media_buffer_get_height(DroidMediaBuffer * buffer);
 void droid_media_buffer_release(DroidMediaBuffer *buffer,
 				EGLDisplay display, EGLSyncKHR fence);
+void *droid_media_buffer_lock(DroidMediaBuffer * buffer, uint32_t mode);
+void droid_media_buffer_unlock(DroidMediaBuffer * buffer);
 
 /* private.h */
 DroidMediaBuffer *droid_media_buffer_queue_acquire_buffer(DroidMediaBufferQueue *queue,
